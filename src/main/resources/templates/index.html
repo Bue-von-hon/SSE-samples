@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Real-time Comment Feature</title>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <button id="connectButton">connect 요청</button>
+  <button id="countButton">count 요청, 조회수 증가</button>
+  <div id="count"></div>
+</div>
+
+<script>
+  var BASE_URL = "http://localhost:8080";
+  var count = null;
+  // 탭 아이디 생성
+  var tabId = generatetabId();
+
+  // 아티클 아이디 생성, 뒤에 랜덤하게 수를 붙힘(1 or 2)
+  var randomNumber = Math.floor(Math.random() * 2) + 1;
+  var articleId = "news" + randomNumber;
+  console.log('article id : ', articleId);
+
+  function handleConnect() {
+    // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
+    var sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+    sse.addEventListener('connect', function(e) {
+      var receivedConnectData = e.data;
+
+      console.log('connect event data: ', receivedConnectData);
+    });
+
+    sse.addEventListener('count', function(e) {
+      var receivedCount = e.data;
+
+      console.log("count event data", receivedCount);
+      count = receivedCount;
+      document.getElementById('count').textContent = count;
+    });
+  }
+
+  function handleCountClick() {
+    axios.post(BASE_URL + "/count?articleId=" + articleId)
+          .then(function(response) {
+      console.log('handleCountClick', response);
+    })
+          .catch(function(error) {
+      console.log('error', error);
+    });
+  }
+
+  // 탭 아이디 생성 함수
+  function generatetabId() {
+    // 원하는 탭 아이디 생성 방식을 구현
+    // 예시: 랜덤한 문자열 생성
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var tabId = '';
+    for (var i = 0; i < 10; i++) {
+      tabId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return tabId;
+  }
+
+  document.getElementById('connectButton').addEventListener('click', handleConnect);
+  document.getElementById('countButton').addEventListener('click', handleCountClick);
+</script>
+</body>
+</html>
