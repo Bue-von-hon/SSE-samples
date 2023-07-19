@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,7 +26,7 @@ public class SseController {
     public ResponseEntity<SseEmitter> connect(@RequestParam("tabId") final String tabId,
                                               @RequestParam("articleId") final String articleId) {
         log.info("tabId : {}", tabId);
-        final SseEmitter emitter = sseEmitters.add(tabId, articleId);
+        final SseEmitter emitter = sseEmitters.connect(tabId, articleId);
         try {
             emitter.send(SseEmitter.event()
                                    .name("connect")
@@ -40,5 +41,18 @@ public class SseController {
     public ResponseEntity<Void> count(@RequestParam("articleId") final String articleId) {
         sseEmitters.count(articleId);
         return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/tarticle")
+    public void changeTaticle(@RequestParam("tabId") final String tabId,
+                              @RequestParam("articleId") final String articleId) {
+        sseEmitters.changeTaticle(tabId, articleId);
+    }
+
+    @PostMapping("/disconnect")
+    public void disconnect(@RequestParam("tabId") final String tabId,
+                           @RequestParam("articleId") final String articleId) {
+        log.info("cleanup called! tab's id : {}", tabId);
+        sseEmitters.disconnect(tabId, articleId);
     }
 }

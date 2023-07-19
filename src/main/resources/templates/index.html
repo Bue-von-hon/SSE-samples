@@ -8,6 +8,7 @@
 <div id="app">
   <button id="connectButton">connect 요청</button>
   <button id="countButton">count 요청, 조회수 증가</button>
+  <button id="changeArticleButton">현재 탭의 아티클 변경</button>
   <div id="count"></div>
 </div>
 
@@ -25,29 +26,57 @@
   function handleConnect() {
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
     var sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
-    sse.addEventListener('connect', function(e) {
+    sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
 
       console.log('connect event data: ', receivedConnectData);
     });
 
-    sse.addEventListener('count', function(e) {
+    sse.addEventListener('count', function (e) {
       var receivedCount = e.data;
 
       console.log("count event data", receivedCount);
       count = receivedCount;
       document.getElementById('count').textContent = count;
     });
+
+    window.onbeforeunload = function() {
+      handleDisconnect(sse);
+    };
   }
 
   function handleCountClick() {
-    axios.post(BASE_URL + "/count?articleId=" + articleId)
-          .then(function(response) {
+    axios.post(BASE_URL + "/count?articleId=" + articleId).then(function (response) {
       console.log('handleCountClick', response);
-    })
-          .catch(function(error) {
+    }).catch(function (error) {
       console.log('error', error);
     });
+  }
+
+  function handleChangeArticleClick() {
+    if (articleId === 'news1') {
+      articleId = 'news2';
+    } else if (articleId === 'news2') {
+      articleId = 'news1';
+    }
+    console.log('new article id : ', articleId);
+
+    // tab + article = tarticle
+    axios.patch(BASE_URL + "/tarticle?tabId=" + tabId + "&articleId=" + articleId).then(function (response) {
+      console.log('handleCountClick', response);
+    }).catch(function (error) {
+      console.log('error', error);
+    });
+  }
+
+  function handleDisconnect(sse) {
+    // Close the SSE connection
+    sse.close();
+
+    // Send a disconnect request to the server
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", BASE_URL + "/disconnect?tabId=" + tabId + "&articleId=" + articleId, true);
+    xhr.send();
   }
 
   // 탭 아이디 생성 함수
@@ -64,6 +93,7 @@
 
   document.getElementById('connectButton').addEventListener('click', handleConnect);
   document.getElementById('countButton').addEventListener('click', handleCountClick);
+  document.getElementById('changeArticleButton').addEventListener('click', handleChangeArticleClick);
 </script>
 </body>
 </html>
