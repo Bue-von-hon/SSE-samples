@@ -47,6 +47,7 @@
 
       // 연결이 닫힌 경우의 처리 로직
       if (sse.readyState == EventSource.CLOSED) {
+        sse.close();
         console.log("Connection to server closed. please re-connect");
       }
     };
