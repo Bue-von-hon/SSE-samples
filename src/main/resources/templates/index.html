@@ -26,6 +26,7 @@
   function handleConnect() {
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
     var sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
 
@@ -39,6 +40,16 @@
       count = receivedCount;
       document.getElementById('count').textContent = count;
     });
+
+    sse.onerror = function() {
+      // 연결에 문제가 발생했을 때의 처리 로직
+      console.log("Error occurred while connecting to server.");
+
+      // 연결이 닫힌 경우의 처리 로직
+      if (sse.readyState == EventSource.CLOSED) {
+        console.log("Connection to server closed. please re-connect");
+      }
+    };
 
     window.onbeforeunload = function() {
       handleDisconnect(sse);
@@ -54,15 +65,18 @@
   }
 
   function handleChangeArticleClick() {
-    if (articleId === 'news1') {
-      articleId = 'news2';
-    } else if (articleId === 'news2') {
-      articleId = 'news1';
+    var newArticleId;
+    var oldArticleId = articleId;
+    if (oldArticleId === 'news1') {
+      newArticleId = 'news2';
+    } else if (oldArticleId === 'news2') {
+      newArticleId = 'news1';
     }
-    console.log('new article id : ', articleId);
+    console.log('new article id : ', newArticleId);
+    articleId = newArticleId;
 
     // tab + article = tarticle
-    axios.patch(BASE_URL + "/tarticle?tabId=" + tabId + "&articleId=" + articleId).then(function (response) {
+    axios.patch(BASE_URL + "/tarticle?tabid=" + tabId + "&newarticleid=" + newArticleId + "&oldarticleid=" + oldArticleId).then(function (response) {
       console.log('handleCountClick', response);
     }).catch(function (error) {
       console.log('error', error);

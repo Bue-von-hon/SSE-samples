@@ -44,9 +44,10 @@ public class SseController {
     }
 
     @PatchMapping("/tarticle")
-    public void changeTaticle(@RequestParam("tabId") final String tabId,
-                              @RequestParam("articleId") final String articleId) {
-        sseEmitters.changeTaticle(tabId, articleId);
+    public void changeTaticle(@RequestParam("tabid") final String tabId,
+                              @RequestParam("newarticleid") final String newArticleId,
+                              @RequestParam("oldarticleid") final String oldArticleId) {
+        sseEmitters.changeTaticle(tabId, newArticleId, oldArticleId);
     }
 
     @PostMapping("/disconnect")
