@@ -50,10 +50,6 @@
         console.log("Connection to server closed. please re-connect");
       }
     };
-
-    window.onbeforeunload = function() {
-      handleDisconnect(sse);
-    };
   }
 
   function handleCountClick() {
