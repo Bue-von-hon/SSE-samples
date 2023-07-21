@@ -28,9 +28,11 @@ public class SseController {
         log.info("tabId : {}", tabId);
         final SseEmitter emitter = sseEmitters.connect(tabId, articleId);
         try {
-            emitter.send(SseEmitter.event()
-                                   .name("connect")
-                                   .data("connected!"));
+            final SseEmitter.SseEventBuilder eventBuilder = SseEmitter.event()
+                                                                      .name("connect")
+                                                                      .data("connected!")
+                                                                      .reconnectTime(10000L);
+            emitter.send(eventBuilder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

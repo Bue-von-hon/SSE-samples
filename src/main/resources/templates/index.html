@@ -80,16 +80,6 @@
     });
   }
 
-  function handleDisconnect(sse) {
-    // Close the SSE connection
-    sse.close();
-
-    // Send a disconnect request to the server
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", BASE_URL + "/disconnect?tabId=" + tabId + "&articleId=" + articleId, true);
-    xhr.send();
-  }
-
   // 탭 아이디 생성 함수
   function generatetabId() {
     // 원하는 탭 아이디 생성 방식을 구현

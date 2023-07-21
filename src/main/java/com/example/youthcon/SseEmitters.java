@@ -2,32 +2,50 @@ package com.example.youthcon;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 @Component
 @Slf4j
 public class SseEmitters {
 
     // todo(hun): 아티클별 조회수
-    private static final ConcurrentHashMap<String, AtomicLong> articleId2AtomicLong = new ConcurrentHashMap<>();
+    private static final Map<String, AtomicLong> articleId2AtomicLong = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<String, SseEmitter> tabId2SseEmitter = new ConcurrentHashMap<>();
+    private final LoadingCache<String, SseEmitter> tabId2SseEmitter = CacheBuilder.newBuilder()
+                                                                    .expireAfterAccess(10000L, TimeUnit.MILLISECONDS)
+                                                                    .build(
+                                                                            new CacheLoader<String, SseEmitter>() {
+                                                                                @Override
+                                                                                public SseEmitter load(String key) {
+                                                                                    // 캐시 항목이 없거나 만료된 경우에 값을 로드하는 코드
+                                                                                    return null;
+                                                                                }
+                                                                            }
+                                                                    );
 
-    private final ConcurrentHashMap<String, Set<SseEmitter>> articleToEmitter = new ConcurrentHashMap<>();
+    private final Map<String, Set<SseEmitter>> articleToEmitter = new ConcurrentHashMap<>();
 
-    SseEmitter connect(final String tabId, final String articleId) {
-        final SseEmitter oldEmitter = tabId2SseEmitter.get(tabId);
+    public SseEmitter connect(final String tabId, final String articleId) {
+        final SseEmitter oldEmitter = tabId2SseEmitter.getIfPresent(tabId);
 
         if (oldEmitter != null) {
             oldEmitter.complete();
         }
 
-        final SseEmitter newEmitter = new SseEmitter(60 * 60 * 1000L);
+        final SseEmitter newEmitter = new SseEmitter(10000L);
         setCallback(articleId, newEmitter);
         tabId2SseEmitter.put(tabId, newEmitter);
 
@@ -42,23 +60,32 @@ public class SseEmitters {
 
     private void setCallback(final String articleId, final SseEmitter emitter) {
         emitter.onCompletion(() -> {
-            final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
-            if (emitters != null) {
-                emitters.remove(emitter);
+            synchronized (articleToEmitter) {
+                final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
+                if (emitters != null && !emitters.isEmpty()) {
+                    emitters.remove(emitter);
+                    articleToEmitter.put(articleId, emitters);
+                }
             }
         });
 
         emitter.onError(error -> {
-            final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
-            if (emitters != null) {
-                emitters.remove(emitter);
+            synchronized (articleToEmitter) {
+                final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
+                if (emitters != null && !emitters.isEmpty()) {
+                    emitters.remove(emitter);
+                    articleToEmitter.put(articleId, emitters);
+                }
             }
         });
 
         emitter.onTimeout(() -> {
-            final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
-            if (emitters != null) {
-                emitters.remove(emitter);
+            synchronized (articleToEmitter) {
+                final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
+                if (emitters != null && !emitters.isEmpty()) {
+                    emitters.remove(emitter);
+                    articleToEmitter.put(articleId, emitters);
+                }
             }
         });
     }
@@ -71,9 +98,11 @@ public class SseEmitters {
         final Set<SseEmitter> emitters = articleToEmitter.getOrDefault(articleId, new HashSet<>());
         emitters.forEach(emitter -> {
             try {
-                emitter.send(SseEmitter.event()
-                                       .name("count")
-                                       .data(count));
+                final SseEmitter.SseEventBuilder eventBuilder = SseEmitter.event()
+                                                                          .name("count")
+                                                                          .data(count)
+                                                                          .reconnectTime(10000L);
+                emitter.send(eventBuilder);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -82,17 +111,17 @@ public class SseEmitters {
 
     // 아티클을 보고 있던 탭에서 다른 아티클로 넘어갔다는 요청이 전송된 경우
     public void changeTaticle(final String tabId, final String newArticleId, final String oldArticleId) {
-        final SseEmitter emitter = tabId2SseEmitter.get(tabId);
-        if (emitter == null) {
+        final SseEmitter oldEmitter = tabId2SseEmitter.getIfPresent(tabId);
+        if (oldEmitter == null) {
             return;
         }
 
         final Set<SseEmitter> oldEmitters = articleToEmitter.getOrDefault(oldArticleId, new HashSet<>());
-        oldEmitters.remove(emitter);
+        oldEmitters.remove(oldEmitter);
         articleToEmitter.put(oldArticleId, oldEmitters);
 
         final Set<SseEmitter> newEmitters = articleToEmitter.getOrDefault(newArticleId, new HashSet<>());
-        newEmitters.add(emitter);
+        newEmitters.add(oldEmitter);
         articleToEmitter.put(newArticleId, newEmitters);
 
         log.info("tabId : {}", tabId);
@@ -105,13 +134,14 @@ public class SseEmitters {
     }
 
     private void cleanup(String tabId, String articleId) {
-        final SseEmitter oldEmitter = tabId2SseEmitter.get(tabId);
+        final SseEmitter oldEmitter = tabId2SseEmitter.getIfPresent(tabId);
         final Set<SseEmitter> emitters = articleToEmitter.get(articleId);
         emitters.remove(oldEmitter);
         articleToEmitter.put(articleId, emitters);
         // 이전에 생성된 커넥션 완료 처리
         if (oldEmitter != null) {
             oldEmitter.complete();
+            tabId2SseEmitter.invalidate(tabId);
         }
     }
 }
