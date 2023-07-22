@@ -22,10 +22,11 @@
   var randomNumber = Math.floor(Math.random() * 2) + 1;
   var articleId = "news" + randomNumber;
   console.log('article id : ', articleId);
+  var sse;
 
   function handleConnect() {
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
-    var sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+    sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
 
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
@@ -72,12 +73,34 @@
     console.log('new article id : ', newArticleId);
     articleId = newArticleId;
 
-    // tab + article = tarticle
-    axios.patch(BASE_URL + "/tarticle?tabid=" + tabId + "&newarticleid=" + newArticleId + "&oldarticleid=" + oldArticleId).then(function (response) {
-      console.log('handleCountClick', response);
-    }).catch(function (error) {
-      console.log('error', error);
+    sse.close()
+    // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
+    sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+
+    sse.addEventListener('connect', function (e) {
+      var receivedConnectData = e.data;
+
+      console.log('connect event data: ', receivedConnectData);
     });
+
+    sse.addEventListener('count', function (e) {
+      var receivedCount = e.data;
+
+      console.log("count event data", receivedCount);
+      count = receivedCount;
+      document.getElementById('count').textContent = count;
+    });
+
+    sse.onerror = function() {
+      // 연결에 문제가 발생했을 때의 처리 로직
+      console.log("Error occurred while connecting to server.");
+
+      // 연결이 닫힌 경우의 처리 로직
+      if (sse.readyState == EventSource.CLOSED) {
+        sse.close();
+        console.log("Connection to server closed. please re-connect");
+      }
+    };
   }
 
   // 탭 아이디 생성 함수
