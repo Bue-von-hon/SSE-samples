@@ -17,8 +17,8 @@ public class Connection {
 
     private final String id;
 
-    public Connection(final SseEmitter emitter, final String id) {
-        this.emitter = emitter;
+    public Connection(final String id, final Long timeout) {
+        this.emitter = new SseEmitter(timeout);
         this.id = id;
     }
 

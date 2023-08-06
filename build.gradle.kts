@@ -1,15 +1,18 @@
 plugins {
     java
-    id("org.springframework.boot") version "3.1.1"
-    id("io.spring.dependency-management") version "1.1.0"
+    id("org.springframework.boot") version "3.1.2"
+    id("io.spring.dependency-management") version "1.1.2"
 }
 
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
+
 
 configurations {
     compileOnly {
@@ -22,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web:3.1.2")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("com.google.guava:guava:32.1.1-jre")
     compileOnly("org.projectlombok:lombok")
@@ -35,4 +38,10 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+buildscript {
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:3.1.1")
+    }
 }

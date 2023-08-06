@@ -11,7 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -40,8 +39,7 @@ public class SseEmitters {
             oldConnection.complete();
         }
 
-        final SseEmitter newEmitter = new SseEmitter(10000L);
-        final Connection newConnection = new Connection(newEmitter, tabId);
+        final Connection newConnection = new Connection(tabId, 10000L);
         setCallback(articleId, newConnection);
 
         lock.lock();
@@ -86,6 +84,6 @@ public class SseEmitters {
         articleId2AtomicLong.put(articleId, counter);
 
         final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
-        connections.forEach(connection -> connection.count(count));
+        connections.parallelStream().forEach(connection -> connection.count(count));
     }
 }
