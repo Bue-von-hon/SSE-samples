@@ -1,4 +1,4 @@
-package com.example.youthcon;
+package com.example.youthcon.application;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder;
 
+import com.example.youthcon.Comment;
 import com.google.common.base.Objects;
 
 import lombok.Getter;
@@ -56,6 +57,15 @@ public class Connection {
         send(eventBuilder);
     }
 
+    public void sendComment(final Comment comment) {
+        final SseEmitter.SseEventBuilder eventBuilder =
+                SseEmitter.event()
+                          .name("newComment")
+                          .data(comment)
+                          .reconnectTime(1L);
+        send(eventBuilder);
+    }
+
     private synchronized void send(final SseEventBuilder builder) {
         try {
             emitter.send(builder);
@@ -76,4 +86,5 @@ public class Connection {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
 }
