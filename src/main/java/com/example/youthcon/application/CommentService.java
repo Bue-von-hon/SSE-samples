@@ -16,24 +16,37 @@ import com.google.common.cache.CacheBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Service
 @Slf4j
+@Service
 public class CommentService {
 
-    // todo(hun): 아티클별 코멘트
-    private static final Map<String, List<Comment>> articleId2Comments = new ConcurrentHashMap<>();
+    // 아티클별 댓글
+    private static final Map<String, List<Comment>> articleIdToComments = new ConcurrentHashMap<>();
 
+    // 탭과 연결된 커넥션 그리고 캐시를 이용한 만료처리
+    // 타임 아웃시간이 지나도 탭을 커넥션을 들고있으면 안돼는데, 만료 시간을 설정하면 굳이 지우는 연산을 안해도된다.
     private final Cache<String, Connection> tabIdToConnection = CacheBuilder.newBuilder()
-                                                                            .expireAfterAccess(10000L, TimeUnit.MILLISECONDS)
-                                                                            .build();
+            .expireAfterAccess(10000L, TimeUnit.MILLISECONDS)
+            .build();
 
+    // 아티클과 연결된 커넥션, 같은 아티클을 보는 여러 탭에 이벤트 전송을 막기위함
+    // TODO(hun): 이제는 댓글이라 여러 탭에 이벤트를 전송해야..? 이전에는 푸시 알림이라 방지했지만...
     private final Map<String, Set<Connection>> articleToConnection = new ConcurrentHashMap<>();
 
+    // 특정 탭에서 특정한 아티클을 보기 시작할대 호출되는 메소드
     public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
         completeOldConnection(tabId);
         final Connection newConnection = getNewConnection(tabId, articleId);
         updateAssociateTabAndArticleWithConnection(tabId, articleId, newConnection);
         return newConnection;
+    }
+
+    private void completeOldConnection(final String tabId) {
+        final Connection oldConnection = tabIdToConnection.getIfPresent(tabId);
+
+        if (oldConnection != null) {
+            oldConnection.complete();
+        }
     }
 
     private Connection getNewConnection(final String tabId, final String articleId) {
@@ -49,8 +62,8 @@ public class CommentService {
     }
 
     private void deleteConnectionFromArticleToConnection(
-                                                        final String articleId,
-                                                        final Connection connection) {
+            final String articleId,
+            final Connection connection) {
         final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
         if (!connections.isEmpty()) {
             connections.remove(connection);
@@ -59,18 +72,10 @@ public class CommentService {
         }
     }
 
-    private void completeOldConnection(final String tabId) {
-        final Connection oldConnection = tabIdToConnection.getIfPresent(tabId);
-
-        if (oldConnection != null) {
-            oldConnection.complete();
-        }
-    }
-
     private void updateAssociateTabAndArticleWithConnection(
-                                                            final String tabId,
-                                                            final String articleId,
-                                                            final Connection newConnection) {
+            final String tabId,
+            final String articleId,
+            final Connection newConnection) {
         updateTabIdToConnection(tabId, newConnection);
         updateArticleToConnection(articleId, newConnection);
     }
@@ -84,22 +89,23 @@ public class CommentService {
         final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
         connections.add(newConnection);
         articleToConnection.put(articleId, connections);
-        
+
         log.info("emitter : {}", connections);
     }
 
+    // 댓글을 저장하고 연결된 커넥션들에게 댓글 생성 이벤트를 전달한다.
     public synchronized void saveAndSend(
-                                        final Comment comment,
-                                        final String articleId,
-                                        final String tabId) {
+            final Comment comment,
+            final String articleId,
+            final String tabId) {
         updateComments(comment, tabId);
         sendComment(comment, articleId);
     }
 
     private void updateComments(final Comment comment, final String tabId) {
-        final List<Comment> comments = articleId2Comments.computeIfAbsent(tabId, k -> new ArrayList<>());
+        final List<Comment> comments = articleIdToComments.computeIfAbsent(tabId, k -> new ArrayList<>());
         comments.add(comment);
-        articleId2Comments.put(tabId, comments);
+        articleIdToComments.put(tabId, comments);
     }
 
     private void sendComment(final Comment comment, final String articleId) {

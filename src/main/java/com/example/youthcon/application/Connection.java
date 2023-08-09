@@ -57,7 +57,7 @@ public class Connection {
         send(eventBuilder);
     }
 
-    public void sendComment(final Comment comment) {
+    public synchronized void sendComment(final Comment comment) {
         final SseEmitter.SseEventBuilder eventBuilder =
                 SseEmitter.event()
                           .name("newComment")
