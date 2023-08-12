@@ -29,8 +29,7 @@ public class CommentService {
             .expireAfterAccess(10000L, TimeUnit.MILLISECONDS)
             .build();
 
-    // 아티클과 연결된 커넥션, 같은 아티클을 보는 여러 탭에 이벤트 전송을 막기위함
-    // TODO(hun): 이제는 댓글이라 여러 탭에 이벤트를 전송해야..? 이전에는 푸시 알림이라 방지했지만...
+    // 아티클과 연결된 커넥션, 같은 아티클을 보는 여러 탭에 이벤트 전송을 하기위함
     private final Map<String, Set<Connection>> articleToConnection = new ConcurrentHashMap<>();
 
     // 특정 탭에서 특정한 아티클을 보기 시작할때 호출되는 메소드
@@ -99,7 +98,7 @@ public class CommentService {
             final String articleId,
             final String tabId) {
         updateComments(comment, articleId);
-        sendComment(comment, articleId);
+        sendComment(comment, articleId, tabId);
     }
 
     private void updateComments(final Comment comment, final String articleId) {
@@ -108,9 +107,13 @@ public class CommentService {
         articleIdToComments.put(articleId, comments);
     }
 
-    private void sendComment(final Comment comment, final String articleId) {
-        final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
-        connections.parallelStream().forEach(connection -> connection.sendComment(comment));
+    private void sendComment(final Comment comment, final String articleId, final String tabId) {
+    Connection selfConnection = tabIdToConnection.getIfPresent(tabId);
+    final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
+    
+    connections.stream()
+               .filter(connection -> !connection.equals(selfConnection))
+               .forEach(connection -> connection.sendComment(comment));
     }
 
     public List<Comment> getAll(final String articleId) {

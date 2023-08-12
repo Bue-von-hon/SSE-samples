@@ -10,7 +10,9 @@ import com.example.youthcon.Comment;
 import com.google.common.base.Objects;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class Connection {
 
     @Getter
@@ -23,23 +25,23 @@ public class Connection {
         this.id = id;
     }
 
-    public synchronized void onCompletion(final Runnable callback) {
+    public void onCompletion(final Runnable callback) {
         emitter.onCompletion(callback);
     }
 
-    public synchronized void onError(final Consumer<Throwable> callback) {
+    public void onError(final Consumer<Throwable> callback) {
         emitter.onError(callback);
     }
 
-    public synchronized void onTimeout(final Runnable callback) {
+    public void onTimeout(final Runnable callback) {
         emitter.onTimeout(callback);
     }
 
-    public synchronized void complete() {
+    public void complete() {
         emitter.complete();
     }
 
-    public synchronized void connect() {
+    public void connect() {
         final SseEmitter.SseEventBuilder eventBuilder =
                 SseEmitter.event()
                           .name("connect")
@@ -48,16 +50,7 @@ public class Connection {
         send(eventBuilder);
     }
 
-    public synchronized void count(final long count) {
-        final SseEmitter.SseEventBuilder eventBuilder =
-                SseEmitter.event()
-                          .name("count")
-                          .data(count)
-                          .reconnectTime(1L);
-        send(eventBuilder);
-    }
-
-    public synchronized void sendComment(final Comment comment) {
+    public void sendComment(final Comment comment) {
         final SseEmitter.SseEventBuilder eventBuilder =
                 SseEmitter.event()
                           .name("newComment")
@@ -66,9 +59,10 @@ public class Connection {
         send(eventBuilder);
     }
 
-    private synchronized void send(final SseEventBuilder builder) {
+    private void send(final SseEventBuilder builder) {
         try {
             emitter.send(builder);
+            log.info("comment sent to client");  
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
