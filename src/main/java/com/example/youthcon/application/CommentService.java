@@ -33,7 +33,7 @@ public class CommentService {
     // TODO(hun): 이제는 댓글이라 여러 탭에 이벤트를 전송해야..? 이전에는 푸시 알림이라 방지했지만...
     private final Map<String, Set<Connection>> articleToConnection = new ConcurrentHashMap<>();
 
-    // 특정 탭에서 특정한 아티클을 보기 시작할대 호출되는 메소드
+    // 특정 탭에서 특정한 아티클을 보기 시작할때 호출되는 메소드
     public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
         completeOldConnection(tabId);
         final Connection newConnection = getNewConnection(tabId, articleId);
@@ -98,19 +98,23 @@ public class CommentService {
             final Comment comment,
             final String articleId,
             final String tabId) {
-        updateComments(comment, tabId);
+        updateComments(comment, articleId);
         sendComment(comment, articleId);
     }
 
-    private void updateComments(final Comment comment, final String tabId) {
-        final List<Comment> comments = articleIdToComments.computeIfAbsent(tabId, k -> new ArrayList<>());
+    private void updateComments(final Comment comment, final String articleId) {
+        final List<Comment> comments = articleIdToComments.computeIfAbsent(articleId, k -> new ArrayList<>());
         comments.add(comment);
-        articleIdToComments.put(tabId, comments);
+        articleIdToComments.put(articleId, comments);
     }
 
     private void sendComment(final Comment comment, final String articleId) {
         final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
         connections.parallelStream().forEach(connection -> connection.sendComment(comment));
+    }
+
+    public List<Comment> getAll(final String articleId) {
+        return articleIdToComments.get(articleId);
     }
 
 }

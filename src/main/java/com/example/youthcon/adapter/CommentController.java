@@ -2,6 +2,8 @@ package com.example.youthcon.adapter;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,21 +13,17 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.example.youthcon.adapter.inbound.PostCommentRequest;
+import com.example.youthcon.Comment;
 import com.example.youthcon.application.CommentService;
 import com.example.youthcon.application.Connection;
-import com.example.youthcon.application.SseEmitters;
 
 @RestController
 @Slf4j
-public class SseController {
-
-    private final SseEmitters sseEmitters;
+public class CommentController {
 
     private final CommentService commentService;
 
-    public SseController(final SseEmitters sseEmitters, final CommentService commentService) {
-        this.sseEmitters = sseEmitters;
+    public CommentController(final CommentService commentService) {
         this.commentService = commentService;
     }
 
@@ -33,26 +31,26 @@ public class SseController {
     public ResponseEntity<SseEmitter> connect(
                                             @RequestParam("tabId") final String tabId,
                                             @RequestParam("articleId") final String articleId) {
-        final Connection connection = sseEmitters.connect(tabId, articleId);
+        final Connection connection = commentService.startViewingArticle(tabId, articleId);
         connection.connect();
         log.info("connected tabId : {}", tabId);
         return ResponseEntity.ok(connection.getEmitter());
     }
 
-    @PostMapping("/count")
-    public ResponseEntity<Void> count(
+    @PostMapping("/comment")
+    public ResponseEntity<Void> saveComment(
+                    @RequestBody final Comment comment,
+                    @RequestParam("tabId") final String tabId,
                     @RequestParam("articleId") final String articleId) {
-        sseEmitters.count(articleId);
+        commentService.saveAndSend(comment, articleId, tabId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/comment")
-    public ResponseEntity<Void> saveComment(
-                    @RequestBody final PostCommentRequest commentRequest,
-                    @RequestParam("tabId") final String tabId,
+    @GetMapping("/comments")
+    public ResponseEntity<List<Comment>> getAllComments(
                     @RequestParam("articleId") final String articleId) {
-        commentService.saveAndSend(PostCommentRequest.toComment(commentRequest), articleId, tabId);
-        return ResponseEntity.ok().build();
+        List<Comment> comments = commentService.getAll(articleId);
+        return ResponseEntity.ok(comments);
     }
 
 }

@@ -2,6 +2,15 @@ package com.example.youthcon;
 
 import java.util.concurrent.atomic.LongAdder;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class Comment {
 
     private String content;
@@ -16,4 +25,5 @@ public class Comment {
     public void thumbsUp() {
         thumbsUp.increment();
     }
+
 }

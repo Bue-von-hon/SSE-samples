@@ -10,6 +10,12 @@
   <button id="countButton">count 요청, 조회수 증가</button>
   <button id="changeArticleButton">현재 탭의 아티클 변경</button>
   <div id="count"></div>
+
+  <button id="saveCommentButton">댓글 저장</button>
+  <button id="getCommentsButton">댓글 가져오기</button>
+  <div id="comments"></div>
+  <input id="commentInput" type="text" placeholder="댓글을 입력하세요">
+  <div id="count"></div>
 </div>
 
 <script>
@@ -52,14 +58,6 @@
         console.log("Connection to server closed. please re-connect");
       }
     };
-  }
-
-  function handleCountClick() {
-    axios.post(BASE_URL + "/count?articleId=" + articleId).then(function (response) {
-      console.log('handleCountClick', response);
-    }).catch(function (error) {
-      console.log('error', error);
-    });
   }
 
   function handleChangeArticleClick() {
@@ -115,9 +113,47 @@
     return tabId;
   }
 
+  function handleSaveComment() {
+    var comment = document.getElementById('commentInput').value;
+    if (comment) {
+      axios.post(BASE_URL + "/comment", {
+        content: comment
+      }, {
+        params: { tabId: tabId, articleId: articleId }
+      }).then(function () {
+        console.log('댓글이 저장되었습니다.');
+        document.getElementById('commentInput').value = '';
+      }).catch(function (error) {
+        console.log('error', error);
+      });
+    }
+  }
+
+  function handleGetComments() {
+  axios.get(BASE_URL + "/comments", {
+    params: {
+      articleId: articleId
+    }
+  }).then(function (response) {
+    var comments = response.data;
+    var commentsDiv = document.getElementById('comments');
+    commentsDiv.innerHTML = '';
+    comments.forEach(function (comment) {
+      var commentDiv = document.createElement('div');
+      commentDiv.textContent = comment.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+      commentsDiv.appendChild(commentDiv);
+    });
+    console.log('댓글을 가져왔습니다.');
+  }).catch(function (error) {
+    console.log('error', error);
+  });
+}
+
   document.getElementById('connectButton').addEventListener('click', handleConnect);
-  document.getElementById('countButton').addEventListener('click', handleCountClick);
   document.getElementById('changeArticleButton').addEventListener('click', handleChangeArticleClick);
+
+  document.getElementById('saveCommentButton').addEventListener('click', handleSaveComment);
+  document.getElementById('getCommentsButton').addEventListener('click', handleGetComments);
 </script>
 </body>
 </html>
