@@ -26,7 +26,7 @@ public class CommentService {
     // 탭과 연결된 커넥션 그리고 캐시를 이용한 만료처리
     // 타임 아웃시간이 지나도 탭을 커넥션을 들고있으면 안돼는데, 만료 시간을 설정하면 굳이 지우는 연산을 안해도된다.
     private final Cache<String, Connection> tabIdToConnection = CacheBuilder.newBuilder()
-            .expireAfterAccess(10000L, TimeUnit.MILLISECONDS)
+            .expireAfterAccess(10999L, TimeUnit.MILLISECONDS)
             .build();
 
     // 아티클과 연결된 커넥션, 같은 아티클을 보는 여러 탭에 이벤트 전송을 하기위함
@@ -44,7 +44,11 @@ public class CommentService {
         final Connection oldConnection = tabIdToConnection.getIfPresent(tabId);
 
         if (oldConnection != null) {
-            oldConnection.complete();
+            try {
+                oldConnection.complete();
+            } catch (Exception e) {
+                log.info("exception : {}", e.getCause());
+            }
         }
     }
 
@@ -108,7 +112,7 @@ public class CommentService {
     }
 
     private void sendComment(final Comment comment, final String articleId, final String tabId) {
-    Connection selfConnection = tabIdToConnection.getIfPresent(tabId);
+    final Connection selfConnection = tabIdToConnection.getIfPresent(tabId);
     final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
     
     connections.stream()

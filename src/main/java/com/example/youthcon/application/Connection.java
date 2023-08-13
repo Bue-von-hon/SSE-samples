@@ -64,7 +64,9 @@ public class Connection {
             emitter.send(builder);
             log.info("comment sent to client");  
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // 유저가 탭을 닫고, 충분한 시간이 지나기 전에 댓글을 전송해야한다면, broken pipe 에러가 날 수 있다
+            // 그래서 complete 해주어야 한다.
+            emitter.complete();
         }
     }
 

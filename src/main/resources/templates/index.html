@@ -7,7 +7,6 @@
 <body>
 <div id="app">
   <button id="connectButton">connect 요청</button>
-  <button id="countButton">count 요청, 조회수 증가</button>
   <button id="changeArticleButton">현재 탭의 아티클 변경</button>
   <div id="count"></div>
 
@@ -40,12 +39,14 @@
       console.log('connect event data: ', receivedConnectData);
     });
 
-    sse.addEventListener('count', function (e) {
-      var receivedCount = e.data;
+    sse.addEventListener('newComment', function (e) {
+        var receivedCommentData = JSON.parse(e.data);
+        var commentsDiv = document.getElementById('comments');
+        var commentDiv = document.createElement('div');
+        commentDiv.textContent = receivedCommentData.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+        commentsDiv.appendChild(commentDiv);
 
-      console.log("count event data", receivedCount);
-      count = receivedCount;
-      document.getElementById('count').textContent = count;
+        console.log('새 댓글을 추가했습니다.');
     });
 
     sse.onerror = function() {
@@ -81,12 +82,29 @@
       console.log('connect event data: ', receivedConnectData);
     });
 
-    sse.addEventListener('count', function (e) {
-      var receivedCount = e.data;
+    sse.addEventListener('newComment', function (e) {
+      var receivedCommentData = JSON.parse(e.data);
+      var commentsDiv = document.getElementById('comments');
+      var commentDiv = document.createElement('div');
+      commentDiv.textContent = receivedCommentData.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
 
-      console.log("count event data", receivedCount);
-      count = receivedCount;
-      document.getElementById('count').textContent = count;
+      // 새 댓글 표시를 위한 span 요소를 생성
+      var newLabel = document.createElement('span');
+      newLabel.textContent = 'new';
+      newLabel.style.color = 'red';
+      newLabel.style.fontSize = 'small';
+      newLabel.style.marginLeft = '5px';
+
+      // commentDiv에 새 댓글 표시를 추가
+      commentDiv.appendChild(newLabel);
+
+      // 새 댓글 표시를 5초 후에 제거
+      setTimeout(function () {
+          newLabel.remove();
+      }, 5000);
+
+      commentsDiv.appendChild(commentDiv);
+      console.log('새 댓글을 추가했습니다.');
     });
 
     sse.onerror = function() {
@@ -122,6 +140,14 @@
         params: { tabId: tabId, articleId: articleId }
       }).then(function () {
         console.log('댓글이 저장되었습니다.');
+
+        // 댓글 목록에 추가
+        var commentsDiv = document.getElementById('comments');
+        var commentDiv = document.createElement('div');
+        commentDiv.textContent = comment; // 새로운 댓글의 내용
+        commentsDiv.appendChild(commentDiv);
+
+        // 입력 필드 초기화
         document.getElementById('commentInput').value = '';
       }).catch(function (error) {
         console.log('error', error);
@@ -130,24 +156,24 @@
   }
 
   function handleGetComments() {
-  axios.get(BASE_URL + "/comments", {
-    params: {
-      articleId: articleId
-    }
-  }).then(function (response) {
-    var comments = response.data;
-    var commentsDiv = document.getElementById('comments');
-    commentsDiv.innerHTML = '';
-    comments.forEach(function (comment) {
-      var commentDiv = document.createElement('div');
-      commentDiv.textContent = comment.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
-      commentsDiv.appendChild(commentDiv);
+    axios.get(BASE_URL + "/comments", {
+      params: {
+        articleId: articleId
+      }
+    }).then(function (response) {
+      var comments = response.data;
+      var commentsDiv = document.getElementById('comments');
+      commentsDiv.innerHTML = '';
+      comments.forEach(function (comment) {
+        var commentDiv = document.createElement('div');
+        commentDiv.textContent = comment.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+        commentsDiv.appendChild(commentDiv);
+      });
+      console.log('댓글을 가져왔습니다.');
+    }).catch(function (error) {
+      console.log('error', error);
     });
-    console.log('댓글을 가져왔습니다.');
-  }).catch(function (error) {
-    console.log('error', error);
-  });
-}
+  }
 
   document.getElementById('connectButton').addEventListener('click', handleConnect);
   document.getElementById('changeArticleButton').addEventListener('click', handleChangeArticleClick);
