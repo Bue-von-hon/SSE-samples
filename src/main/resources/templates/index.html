@@ -38,7 +38,8 @@
         var receivedCommentData = JSON.parse(e.data);
         var commentsDiv = document.getElementById('comments');
         var commentDiv = document.createElement('div');
-        commentDiv.textContent = receivedCommentData.content; // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+        // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+        commentDiv.textContent = receivedCommentData.content;
         commentsDiv.appendChild(commentDiv);
 
         console.log('새 댓글을 추가했습니다.');
@@ -81,7 +82,8 @@
         // 댓글 목록에 추가
         var commentsDiv = document.getElementById('comments');
         var commentDiv = document.createElement('div');
-        commentDiv.textContent = comment; // 새로운 댓글의 내용
+        // 새로운 댓글의 내용
+        commentDiv.textContent = comment;
         commentsDiv.appendChild(commentDiv);
 
         // 입력 필드 초기화
