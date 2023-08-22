@@ -10,20 +10,20 @@
   <button id="saveCommentButton">댓글 저장</button>
   <div id="comments"></div>
   <input id="commentInput" type="text" placeholder="댓글을 입력하세요">
+  <input id="userInput" type="text" placeholder="유저 이름을 입력하세요">
 </div>
 
 <script>
   let BASE_URL = "http://localhost:8080";
-  // 탭 아이디 생성
-  let tabId = generatetabId();
-
   // 아티클 아이디 생성, 뒤에 랜덤하게 수를 붙힘(1 or 2)
   let articleId = "news";
   let sse;
+  let user_name;
 
   function handleConnect() {
+    user_name = document.getElementById('userInput').value;
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
-    sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+    sse = new EventSource(BASE_URL + "/connect?tabId=" + user_name + "&articleId=" + articleId);
 
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
@@ -68,25 +68,14 @@
     };
   }
 
-  // 탭 아이디 생성 함수
-  function generatetabId() {
-    // 원하는 탭 아이디 생성 방식을 구현
-    // 예시: 랜덤한 문자열 생성
-    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let tabId = '';
-    for (let i = 0; i < 10; i++) {
-      tabId += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return tabId;
-  }
-
   function handleSaveComment() {
     let comment = document.getElementById('commentInput').value;
+
     if (comment) {
       axios.post(BASE_URL + "/comment", {
         content: comment
       }, {
-        params: { tabId: tabId, articleId: articleId }
+        params: { tabId: user_name, articleId: articleId }
       }).then(function () {
         console.log('댓글이 저장되었습니다.');
 
