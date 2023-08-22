@@ -28,8 +28,8 @@ public class CommentController {
 
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> connect(
-                                            @RequestParam("tabId") final String tabId,
-                                            @RequestParam("articleId") final String articleId) {
+            @RequestParam("tabId") final String tabId,
+            @RequestParam("articleId") final String articleId) {
         final Connection connection = commentService.startViewingArticle(tabId, articleId);
         connection.connect();
         log.info("connected tabId : {}", tabId);
@@ -38,9 +38,9 @@ public class CommentController {
 
     @PostMapping("/comment")
     public ResponseEntity<Void> saveComment(
-                    @RequestBody final Comment comment,
-                    @RequestParam("tabId") final String tabId,
-                    @RequestParam("articleId") final String articleId) {
+            @RequestBody final Comment comment,
+            @RequestParam("tabId") final String tabId,
+            @RequestParam("articleId") final String articleId) {
         commentService.saveAndSend(comment, articleId, tabId);
         return ResponseEntity.ok().build();
     }
