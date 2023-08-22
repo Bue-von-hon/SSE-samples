@@ -1,6 +1,5 @@
 package com.example.youthcon.preparation;
 
-import com.example.youthcon.handson.CommentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
