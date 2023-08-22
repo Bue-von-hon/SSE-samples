@@ -29,14 +29,6 @@ public class TabIdToConnectionManager {
         tabIdToConnection.cleanUp();
     }
 
-    public void put(final String tabId, final Connection newConnection) {
-        tabIdToConnection.put(tabId, newConnection);
-    }
-
-    public long size() {
-        return tabIdToConnection.size();
-    }
-
     public void completeOldConnection(final String tabId) {
         final Connection oldConnection = tabIdToConnection.getIfPresent(tabId);
 

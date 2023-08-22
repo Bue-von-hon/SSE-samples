@@ -21,10 +21,6 @@ public class ArticleToConnectionManager {
         return articleToConnection.getOrDefault(articleId, new HashSet<>());
     }
 
-    public void put(final String articleId, final Set<Connection> connections) {
-        articleToConnection.put(articleId, connections);
-    }
-
     public void updateArticleToConnection(final String articleId, final Connection newConnection) {
         final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
         connections.add(newConnection);
