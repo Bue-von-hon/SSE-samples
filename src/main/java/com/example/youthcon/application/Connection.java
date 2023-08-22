@@ -46,7 +46,7 @@ public class Connection {
                 SseEmitter.event()
                           .name("connect")
                           .data("connected!")
-                          .reconnectTime(1L);
+                          .reconnectTime(3000L);
         send(eventBuilder);
     }
 
@@ -55,7 +55,7 @@ public class Connection {
                 SseEmitter.event()
                           .name("newComment")
                           .data(comment)
-                          .reconnectTime(1L);
+                          .reconnectTime(30000L);
         send(eventBuilder);
     }
 
