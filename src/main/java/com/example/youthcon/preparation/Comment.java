@@ -1,4 +1,4 @@
-package com.example.youthcon;
+package com.example.youthcon.preparation;
 
 import java.util.concurrent.atomic.LongAdder;
 

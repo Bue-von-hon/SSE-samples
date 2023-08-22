@@ -1,4 +1,4 @@
-package com.example.youthcon.application;
+package com.example.youthcon.preparation;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -6,7 +6,6 @@ import java.util.function.Consumer;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder;
 
-import com.example.youthcon.Comment;
 import com.google.common.base.Objects;
 
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package com.example.youthcon.application;
+package com.example.youthcon.handson;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,9 +8,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.example.youthcon.preparation.Connection;
 import org.springframework.stereotype.Service;
 
-import com.example.youthcon.Comment;
+import com.example.youthcon.preparation.Comment;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 

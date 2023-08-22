@@ -1,4 +1,4 @@
-package com.example.youthcon.adapter;
+package com.example.youthcon.handson;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,9 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.example.youthcon.Comment;
-import com.example.youthcon.application.CommentService;
-import com.example.youthcon.application.Connection;
+import com.example.youthcon.preparation.Comment;
+import com.example.youthcon.preparation.Connection;
 
 @RestController
 @Slf4j

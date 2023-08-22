@@ -1,4 +1,4 @@
-package com.example.youthcon.adapter;
+package com.example.youthcon.preparation;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

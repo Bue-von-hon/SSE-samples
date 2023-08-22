@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import com.example.youthcon.preparation.Comment;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
