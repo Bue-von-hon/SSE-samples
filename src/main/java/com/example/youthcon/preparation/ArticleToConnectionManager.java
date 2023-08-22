@@ -34,4 +34,14 @@ public class ArticleToConnectionManager {
         log.info("emitter : {}", connections);
     }
 
+    public boolean removeConnectionIfNotEmpty(String articleId, Connection connection) {
+        final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
+        boolean notEmpty = !connections.isEmpty();
+        if (notEmpty) {
+            connections.remove(connection);
+            articleToConnection.put(articleId, connections);
+        }
+        return notEmpty;
+    }
+
 }

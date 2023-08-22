@@ -39,18 +39,13 @@ public class CommentService {
     }
 
     private void setCallback(final String articleId, final Connection connection) {
-        connection.onCompletion(() -> deleteConnectionFromArticleToConnection(articleId, connection));
-        connection.onError(error -> deleteConnectionFromArticleToConnection(articleId, connection));
-        connection.onTimeout(() -> deleteConnectionFromArticleToConnection(articleId, connection));
+        connection.onCompletion(() -> removeConnectionAndUpdateTab(articleId, connection));
+        connection.onError(error -> removeConnectionAndUpdateTab(articleId, connection));
+        connection.onTimeout(() -> removeConnectionAndUpdateTab(articleId, connection));
     }
 
-    private void deleteConnectionFromArticleToConnection(
-            final String articleId,
-            final Connection connection) {
-        final Set<Connection> connections = articleToConnectionManager.getOrDefault(articleId);
-        if (!connections.isEmpty()) {
-            connections.remove(connection);
-            articleToConnectionManager.put(articleId, connections);
+    private void removeConnectionAndUpdateTab(String articleId, Connection connection) {
+        if (articleToConnectionManager.removeConnectionIfNotEmpty(articleId, connection)) {
             tabIdToConnectionManager.cleanUp();
         }
     }
