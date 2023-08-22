@@ -27,8 +27,7 @@
 
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
-
-      console.log('connect event data: ', receivedConnectData);
+      printLog('connect event data: ', receivedConnectData);
     });
 
     sse.addEventListener('newComment', function (e) {
@@ -54,13 +53,12 @@
       }, 5000);
 
       commentsDiv.appendChild(commentDiv);
-      console.log('새 댓글을 추가했습니다.');
+      printLog('새 댓글을 추가했습니다.');
     });
 
     sse.onerror = function() {
       // 연결에 문제가 발생했을 때의 처리 로직
-      console.log("타임아웃 발생");
-
+      printLog('타임아웃 발생');
       // 연결이 닫힌 경우의 처리 로직
       if (sse.readyState == EventSource.CLOSED) {
         sse.close();
@@ -77,8 +75,7 @@
       }, {
         params: { tabId: user_name, articleId: articleId }
       }).then(function () {
-        console.log('댓글이 저장되었습니다.');
-
+        printLog('댓글이 저장되었습니다.');
         // 댓글 목록에 추가
         let commentsDiv = document.getElementById('comments');
         let commentDiv = document.createElement('div');
@@ -89,9 +86,13 @@
         // 입력 필드 초기화
         document.getElementById('commentInput').value = '';
       }).catch(function (error) {
-        console.log('error', error);
+        printLog('error', error);
       });
     }
+  }
+
+  function printLog(...args) {
+    console.log(...args);
   }
 
   document.getElementById('connectButton').addEventListener('click', handleConnect);
