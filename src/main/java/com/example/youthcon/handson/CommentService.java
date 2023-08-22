@@ -9,17 +9,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.example.youthcon.preparation.Connection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.example.youthcon.preparation.Comment;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 @Service
 public class CommentService {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentService.class);
 
     // 아티클별 댓글
     private static final Map<String, List<Comment>> articleIdToComments = new ConcurrentHashMap<>();

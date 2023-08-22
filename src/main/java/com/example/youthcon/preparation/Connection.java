@@ -3,18 +3,17 @@ package com.example.youthcon.preparation;
 import java.io.IOException;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder;
 
 import com.google.common.base.Objects;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class Connection {
 
-    @Getter
+    private static final Logger log = LoggerFactory.getLogger(Connection.class);
+
     private final SseEmitter emitter;
 
     private final String id;
@@ -22,6 +21,10 @@ public class Connection {
     public Connection(final String id, final Long timeout) {
         this.emitter = new SseEmitter(timeout);
         this.id = id;
+    }
+
+    public SseEmitter getEmitter() {
+        return emitter;
     }
 
     public void onCompletion(final Runnable callback) {

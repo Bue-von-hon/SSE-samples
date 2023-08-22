@@ -1,8 +1,9 @@
 package com.example.youthcon.handson;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,9 @@ import com.example.youthcon.preparation.Comment;
 import com.example.youthcon.preparation.Connection;
 
 @RestController
-@Slf4j
 public class CommentController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommentController.class);
 
     private final CommentService commentService;
 
