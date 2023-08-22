@@ -13,14 +13,13 @@
 </div>
 
 <script>
-  var BASE_URL = "http://localhost:8080";
-  var count = null;
+  let BASE_URL = "http://localhost:8080";
   // 탭 아이디 생성
-  var tabId = generatetabId();
+  let tabId = generatetabId();
 
   // 아티클 아이디 생성, 뒤에 랜덤하게 수를 붙힘(1 or 2)
-  var articleId = "news";
-  var sse;
+  let articleId = "news";
+  let sse;
 
   function handleConnect() {
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
@@ -33,25 +32,25 @@
     });
 
     sse.addEventListener('newComment', function (e) {
-      var receivedCommentData = JSON.parse(e.data);
-      var commentsDiv = document.getElementById('comments');
-      var commentDiv = document.createElement('div');
+      let receivedCommentData = JSON.parse(e.data);
+      let commentsDiv = document.getElementById('comments');
+      let commentDiv = document.createElement('div');
       // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
       commentDiv.textContent = receivedCommentData.content;
 
       // 새 댓글 표시를 위한 span 요소를 생성
-      var newLabel = document.createElement('span');
-      newLabel.textContent = 'new';
-      newLabel.style.color = 'red';
-      newLabel.style.fontSize = 'small';
-      newLabel.style.marginLeft = '5px';
+      let newCommentIndicator = document.createElement('span');
+      newCommentIndicator.textContent = 'new';
+      newCommentIndicator.style.color = 'red';
+      newCommentIndicator.style.fontSize = 'small';
+      newCommentIndicator.style.marginLeft = '5px';
 
       // commentDiv에 새 댓글 표시를 추가
-      commentDiv.appendChild(newLabel);
+      commentDiv.appendChild(newCommentIndicator);
 
       // 새 댓글 표시를 5초 후에 제거
       setTimeout(function () {
-        newLabel.remove();
+        newCommentIndicator.remove();
       }, 5000);
 
       commentsDiv.appendChild(commentDiv);
@@ -73,16 +72,16 @@
   function generatetabId() {
     // 원하는 탭 아이디 생성 방식을 구현
     // 예시: 랜덤한 문자열 생성
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var tabId = '';
-    for (var i = 0; i < 10; i++) {
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let tabId = '';
+    for (let i = 0; i < 10; i++) {
       tabId += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return tabId;
   }
 
   function handleSaveComment() {
-    var comment = document.getElementById('commentInput').value;
+    let comment = document.getElementById('commentInput').value;
     if (comment) {
       axios.post(BASE_URL + "/comment", {
         content: comment
@@ -92,8 +91,8 @@
         console.log('댓글이 저장되었습니다.');
 
         // 댓글 목록에 추가
-        var commentsDiv = document.getElementById('comments');
-        var commentDiv = document.createElement('div');
+        let commentsDiv = document.getElementById('comments');
+        let commentDiv = document.createElement('div');
         // 새로운 댓글의 내용
         commentDiv.textContent = comment;
         commentsDiv.appendChild(commentDiv);
