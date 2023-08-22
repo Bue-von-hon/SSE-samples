@@ -24,16 +24,9 @@ public class CommentService {
     public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
         connectionManager.completeOldConnection(tabId);
         final Connection newConnection = connectionManager.getNewConnection(tabId, articleId);
-        updateAssociateTabAndArticleWithConnection(tabId, articleId, newConnection);
-        return newConnection;
-    }
-
-    private void updateAssociateTabAndArticleWithConnection(
-            final String tabId,
-            final String articleId,
-            final Connection newConnection) {
         connectionManager.updateTabIdToConnection(tabId, newConnection);
         connectionManager.updateArticleToConnection(articleId, newConnection);
+        return newConnection;
     }
 
     // 댓글을 저장하고 연결된 커넥션들에게 댓글 생성 이벤트를 전달한다.
