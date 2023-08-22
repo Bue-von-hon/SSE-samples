@@ -121,9 +121,4 @@ public class CommentService {
                 .filter(connection -> !connection.equals(selfConnection))
                 .forEach(connection -> connection.sendComment(comment));
     }
-
-    public List<Comment> getAll(final String articleId) {
-        return articleIdToComments.get(articleId);
-    }
-
 }

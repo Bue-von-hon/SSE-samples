@@ -1,7 +1,5 @@
 package com.example.youthcon.handson;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,13 +43,6 @@ public class CommentController {
                     @RequestParam("articleId") final String articleId) {
         commentService.saveAndSend(comment, articleId, tabId);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/comments")
-    public ResponseEntity<List<Comment>> getAllComments(
-                    @RequestParam("articleId") final String articleId) {
-        List<Comment> comments = commentService.getAll(articleId);
-        return ResponseEntity.ok(comments);
     }
 
 }
