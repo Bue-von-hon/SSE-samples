@@ -11,51 +11,29 @@ public class CommentService {
 
     private final ArticleIdToCommentsManager articleIdToCommentsManager;
 
-    private final TabIdToConnectionManager tabIdToConnectionManager;
-
-    private final ArticleToConnectionManager articleToConnectionManager;
+    private final ConnectionManager connectionManager;
 
     public CommentService(
             ArticleIdToCommentsManager articleIdToCommentsManager,
-            TabIdToConnectionManager tabIdToConnectionManager,
-            ArticleToConnectionManager articleToConnectionManager) {
+            ConnectionManager connectionManager) {
         this.articleIdToCommentsManager = articleIdToCommentsManager;
-        this.tabIdToConnectionManager = tabIdToConnectionManager;
-        this.articleToConnectionManager = articleToConnectionManager;
+        this.connectionManager = connectionManager;
     }
 
     // 특정 탭에서 특정한 아티클을 보기 시작할때 호출되는 메소드
     public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
-        tabIdToConnectionManager.completeOldConnection(tabId);
-        final Connection newConnection = getNewConnection(tabId, articleId);
+        connectionManager.completeOldConnection(tabId);
+        final Connection newConnection = connectionManager.getNewConnection(tabId, articleId);
         updateAssociateTabAndArticleWithConnection(tabId, articleId, newConnection);
         return newConnection;
-    }
-
-    private Connection getNewConnection(final String tabId, final String articleId) {
-        final Connection newConnection = new Connection(tabId, 300000L);
-        setCallback(articleId, newConnection);
-        return newConnection;
-    }
-
-    private void setCallback(final String articleId, final Connection connection) {
-        connection.onCompletion(() -> removeConnectionAndUpdateTab(articleId, connection));
-        connection.onError(error -> removeConnectionAndUpdateTab(articleId, connection));
-        connection.onTimeout(() -> removeConnectionAndUpdateTab(articleId, connection));
-    }
-
-    private void removeConnectionAndUpdateTab(String articleId, Connection connection) {
-        if (articleToConnectionManager.removeConnectionIfNotEmpty(articleId, connection)) {
-            tabIdToConnectionManager.cleanUp();
-        }
     }
 
     private void updateAssociateTabAndArticleWithConnection(
             final String tabId,
             final String articleId,
             final Connection newConnection) {
-        tabIdToConnectionManager.updateTabIdToConnection(tabId, newConnection);
-        articleToConnectionManager.updateArticleToConnection(articleId, newConnection);
+        connectionManager.updateTabIdToConnection(tabId, newConnection);
+        connectionManager.updateArticleToConnection(articleId, newConnection);
     }
 
     // 댓글을 저장하고 연결된 커넥션들에게 댓글 생성 이벤트를 전달한다.
@@ -68,8 +46,8 @@ public class CommentService {
     }
 
     private void sendComment(final Comment comment, final String articleId, final String tabId) {
-        final Connection selfConnection = tabIdToConnectionManager.getIfPresent(tabId);
-        final Set<Connection> connections = articleToConnectionManager.getOrDefault(articleId);
+        final Connection selfConnection = connectionManager.getSelfConnection(tabId);
+        final Set<Connection> connections = connectionManager.getConnections(articleId);
         
         connections.stream()
                 .filter(connection -> !connection.equals(selfConnection))
