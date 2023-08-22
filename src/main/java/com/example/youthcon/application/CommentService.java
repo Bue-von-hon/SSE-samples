@@ -112,12 +112,12 @@ public class CommentService {
     }
 
     private void sendComment(final Comment comment, final String articleId, final String tabId) {
-    final Connection selfConnection = tabIdToConnection.getIfPresent(tabId);
-    final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
-    
-    connections.stream()
-               .filter(connection -> !connection.equals(selfConnection))
-               .forEach(connection -> connection.sendComment(comment));
+        final Connection selfConnection = tabIdToConnection.getIfPresent(tabId);
+        final Set<Connection> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
+        
+        connections.stream()
+                .filter(connection -> !connection.equals(selfConnection))
+                .forEach(connection -> connection.sendComment(comment));
     }
 
     public List<Comment> getAll(final String articleId) {
