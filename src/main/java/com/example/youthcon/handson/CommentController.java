@@ -31,7 +31,6 @@ public class CommentController {
             @RequestParam("tabId") final String tabId,
             @RequestParam("articleId") final String articleId) {
         final Connection connection = commentService.startViewingArticle(tabId, articleId);
-        connection.connect();
         log.info("connected tabId : {}", tabId);
         return ResponseEntity.ok(connection.getEmitter());
     }

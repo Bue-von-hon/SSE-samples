@@ -24,6 +24,7 @@ public class CommentService {
     public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
         connectionManager.completeOldConnection(tabId);
         final Connection newConnection = connectionManager.getNewConnection(tabId, articleId);
+        newConnection.connect();
         connectionManager.updateTabIdToConnection(tabId, newConnection);
         connectionManager.updateArticleToConnection(articleId, newConnection);
         return newConnection;
