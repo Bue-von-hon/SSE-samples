@@ -1,50 +1,55 @@
 package com.example.youthcon.handson;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.example.youthcon.preparation.*;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class CommentService {
 
-    private final ArticleIdToCommentsManager articleIdToCommentsManager;
+    private final Map<String, Set<SseEmitter>> articleToConnection = new ConcurrentHashMap<>();
 
-    private final ConnectionManager connectionManager;
+    public SseEmitter startViewingArticle(String articleId) {
+        SseEmitter sseEmitter = new SseEmitter(300000L);
+        final SseEmitter.SseEventBuilder eventBuilder = SseEmitter.event()
+                .name("connect")
+                .data("connected!")
+                .reconnectTime(3000L);
+        send(eventBuilder, sseEmitter);
 
-    public CommentService(
-            ArticleIdToCommentsManager articleIdToCommentsManager,
-            ConnectionManager connectionManager) {
-        this.articleIdToCommentsManager = articleIdToCommentsManager;
-        this.connectionManager = connectionManager;
+        final Set<SseEmitter> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
+        connections.add(sseEmitter);
+        articleToConnection.put(articleId, connections);
+        return sseEmitter;
     }
 
-    // 특정 탭에서 특정한 아티클을 보기 시작할때 호출되는 메소드
-    public synchronized Connection startViewingArticle(final String tabId, final String articleId) {
-        connectionManager.completeOldConnection(tabId);
-        final Connection newConnection = connectionManager.getNewConnection(tabId, articleId);
-        newConnection.connect();
-        connectionManager.updateTabIdToConnection(tabId, newConnection);
-        connectionManager.updateArticleToConnection(articleId, newConnection);
-        return newConnection;
-    }
-
-    // 댓글을 저장하고 연결된 커넥션들에게 댓글 생성 이벤트를 전달한다.
-    public synchronized void saveAndSend(
-            final Comment comment,
-            final String articleId,
-            final String tabId) {
-        articleIdToCommentsManager.updateComments(comment, articleId);
-        sendComment(comment, articleId, tabId);
-    }
-
-    private void sendComment(final Comment comment, final String articleId, final String tabId) {
-        final Connection selfConnection = connectionManager.getSelfConnection(tabId);
-        final Set<Connection> connections = connectionManager.getConnections(articleId);
-        
+    public void saveAndSend(Comment comment, String articleId) {
+        Set<SseEmitter> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
         connections.stream()
-                .filter(connection -> !connection.equals(selfConnection))
-                .forEach(connection -> connection.sendComment(comment));
+                .forEach(connection -> {
+                    final SseEmitter.SseEventBuilder eventBuilder =
+                            SseEmitter.event()
+                                    .name("newComment")
+                                    .data(comment)
+                                    .reconnectTime(30000L);
+                    send(eventBuilder, connection);
+                });
+    }
+
+    void send(final SseEmitter.SseEventBuilder builder, SseEmitter emitter) {
+        try {
+            emitter.send(builder);
+        } catch (IOException e) {
+            // 유저가 탭을 닫고, 충분한 시간이 지나기 전에 댓글을 전송해야한다면, broken pipe 에러가 날 수 있다
+            // 그래서 complete 해주어야 한다.
+            emitter.complete();
+        }
     }
 }

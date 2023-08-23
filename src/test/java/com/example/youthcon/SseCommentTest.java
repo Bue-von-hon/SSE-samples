@@ -80,7 +80,7 @@ class SseCommentTest {
         sleep(2000);
 
         Assertions.assertEquals("connected!", eventSourceWrapper.receivedData.get(0));
-        Assertions.assertEquals("{\"content\":\"Test content\",\"thumbsUp\":null}",
+        Assertions.assertEquals("{\"content\":\"Test content\"}",
                 eventSourceWrapper2.receivedData.get(1));
     }
 

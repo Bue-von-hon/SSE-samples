@@ -10,7 +10,6 @@
   <button id="saveCommentButton">댓글 저장</button>
   <div id="comments"></div>
   <input id="commentInput" type="text" placeholder="댓글을 입력하세요">
-  <input id="userInput" type="text" placeholder="유저 이름을 입력하세요">
 </div>
 
 <script>
@@ -18,12 +17,10 @@
   // 아티클 아이디 생성, 뒤에 랜덤하게 수를 붙힘(1 or 2)
   let articleId = "news";
   let sse;
-  let user_name;
 
   function handleConnect() {
-    user_name = document.getElementById('userInput').value;
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
-    sse = new EventSource(BASE_URL + "/connect?tabId=" + user_name + "&articleId=" + articleId);
+    sse = new EventSource(BASE_URL + "/connect?articleId=" + articleId);
 
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
@@ -73,15 +70,9 @@
       axios.post(BASE_URL + "/comment", {
         content: comment
       }, {
-        params: { tabId: user_name, articleId: articleId }
+        params: { articleId: articleId }
       }).then(function () {
         printLog('댓글이 저장되었습니다.');
-        // 댓글 목록에 추가
-        let commentsDiv = document.getElementById('comments');
-        let commentDiv = document.createElement('div');
-        // 새로운 댓글의 내용
-        commentDiv.textContent = comment;
-        commentsDiv.appendChild(commentDiv);
 
         // 입력 필드 초기화
         document.getElementById('commentInput').value = '';
