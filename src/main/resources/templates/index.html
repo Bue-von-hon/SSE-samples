@@ -1,123 +1,175 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Real-time Comment Feature</title>
+  <title>모두의 SSE</title>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    /* 전체 레이아웃 */
+    #app {
+      width: 80%;
+      margin: auto;
+      font-family: Arial, sans-serif;
+    }
+
+    /* 게시글 정보 */
+    #postInfo {
+      background-color: #f1f1f1;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    #postTitle {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    #postAuthor, #postDate {
+      margin: 5px 0;
+      font-size: 0.9em;
+    }
+
+    /* 게시글 내용 */
+    #postContent {
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    /* 댓글 부분 */
+    #comments {
+      padding: 20px;
+      background-color: #fafafa;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    #commentInput {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    /* 버튼 */
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
 <div id="app">
+  <!-- 게시글 정보 -->
+  <div id="postInfo">
+    <h1 id="postTitle">모두의 Server-Sent Events</h1>
+    <p id="postAuthor">작성자: 김태훈</p>
+    <p id="postDate">작성 일자: 2023-08-26</p>
+  </div>
+
+  <!-- 게시글 내용 -->
+  <div id="postContent">
+    <p>테크살롱에서 휴가 보내려구여..ㅋㅋㅋ - 8월 21일 오후 11시 55분 2호선</p>
+    <p>문 열어주세요~ - 8월 22일 오후 3시 41분</p>
+    <p>집에 언제가죠..? - 8월 23일 오후 10시 14분 테크살롱</p>
+    <P>주니어 개발자 흑역사 만들어주는 제이슨</P>
+  </div>
+
+  <!-- 댓글 -->
+  <div id="comments"></div>
   <button id="connectButton">connect 요청</button>
-  <button id="countButton">count 요청, 조회수 증가</button>
-  <button id="changeArticleButton">현재 탭의 아티클 변경</button>
-  <div id="count"></div>
+  <button id="saveCommentButton">댓글 저장</button>
+  <input id="commentInput" type="text" placeholder="댓글을 입력하세요">
 </div>
 
 <script>
-  var BASE_URL = "http://localhost:8080";
-  var count = null;
-  // 탭 아이디 생성
-  var tabId = generatetabId();
-
+  let BASE_URL = "http://localhost:8080";
   // 아티클 아이디 생성, 뒤에 랜덤하게 수를 붙힘(1 or 2)
-  var randomNumber = Math.floor(Math.random() * 2) + 1;
-  var articleId = "news" + randomNumber;
-  console.log('article id : ', articleId);
-  var sse;
+  let articleId = "news";
+  let sse;
 
   function handleConnect() {
     // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
-    sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
+    sse = new EventSource(BASE_URL + "/connect?articleId=" + articleId);
 
     sse.addEventListener('connect', function (e) {
       var receivedConnectData = e.data;
-
-      console.log('connect event data: ', receivedConnectData);
+      printLog('connect event data: ', receivedConnectData);
     });
 
-    sse.addEventListener('count', function (e) {
-      var receivedCount = e.data;
+    sse.addEventListener('newComment', function (e) {
+      let receivedCommentData = JSON.parse(e.data);
+      let commentsDiv = document.getElementById('comments');
+      let commentDiv = document.createElement('div');
+      // "content"는 댓글의 내용을 담고 있는 필드로 가정합니다.
+      commentDiv.textContent = receivedCommentData.content;
 
-      console.log("count event data", receivedCount);
-      count = receivedCount;
-      document.getElementById('count').textContent = count;
+      // 새 댓글 표시를 위한 span 요소를 생성
+      let newCommentIndicator = document.createElement('span');
+      newCommentIndicator.textContent = 'new';
+      newCommentIndicator.style.color = 'red';
+      newCommentIndicator.style.fontSize = 'small';
+      newCommentIndicator.style.marginLeft = '5px';
+
+      // commentDiv에 새 댓글 표시를 추가
+      commentDiv.appendChild(newCommentIndicator);
+
+      // 새 댓글 표시를 5초 후에 제거
+      setTimeout(function () {
+        newCommentIndicator.remove();
+      }, 5000);
+
+      commentsDiv.appendChild(commentDiv);
+      printLog('새 댓글을 추가했습니다.');
     });
 
     sse.onerror = function() {
       // 연결에 문제가 발생했을 때의 처리 로직
-      console.log("Error occurred while connecting to server.");
-
+      printLog('타임아웃 발생');
       // 연결이 닫힌 경우의 처리 로직
       if (sse.readyState == EventSource.CLOSED) {
         sse.close();
-        console.log("Connection to server closed. please re-connect");
       }
     };
   }
 
-  function handleCountClick() {
-    axios.post(BASE_URL + "/count?articleId=" + articleId).then(function (response) {
-      console.log('handleCountClick', response);
-    }).catch(function (error) {
-      console.log('error', error);
-    });
+  function handleSaveComment() {
+    let comment = document.getElementById('commentInput').value;
+
+    if (comment) {
+      axios.post(BASE_URL + "/comment", {
+        content: comment
+      }, {
+        params: { articleId: articleId }
+      }).then(function () {
+        printLog('댓글이 저장되었습니다.');
+
+        // 입력 필드 초기화
+        document.getElementById('commentInput').value = '';
+      }).catch(function (error) {
+        printLog('error', error);
+      });
+    }
   }
 
-  function handleChangeArticleClick() {
-    var newArticleId;
-    var oldArticleId = articleId;
-    if (oldArticleId === 'news1') {
-      newArticleId = 'news2';
-    } else if (oldArticleId === 'news2') {
-      newArticleId = 'news1';
-    }
-    console.log('new article id : ', newArticleId);
-    articleId = newArticleId;
-
-    sse.close()
-    // SSE 연결 요청 시 탭 아이디를 쿼리 파라미터로 추가
-    sse = new EventSource(BASE_URL + "/connect?tabId=" + tabId + "&articleId=" + articleId);
-
-    sse.addEventListener('connect', function (e) {
-      var receivedConnectData = e.data;
-
-      console.log('connect event data: ', receivedConnectData);
-    });
-
-    sse.addEventListener('count', function (e) {
-      var receivedCount = e.data;
-
-      console.log("count event data", receivedCount);
-      count = receivedCount;
-      document.getElementById('count').textContent = count;
-    });
-
-    sse.onerror = function() {
-      // 연결에 문제가 발생했을 때의 처리 로직
-      console.log("Error occurred while connecting to server.");
-
-      // 연결이 닫힌 경우의 처리 로직
-      if (sse.readyState == EventSource.CLOSED) {
-        sse.close();
-        console.log("Connection to server closed. please re-connect");
-      }
-    };
-  }
-
-  // 탭 아이디 생성 함수
-  function generatetabId() {
-    // 원하는 탭 아이디 생성 방식을 구현
-    // 예시: 랜덤한 문자열 생성
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var tabId = '';
-    for (var i = 0; i < 10; i++) {
-      tabId += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return tabId;
+  function printLog(...args) {
+    console.log(...args);
   }
 
   document.getElementById('connectButton').addEventListener('click', handleConnect);
-  document.getElementById('countButton').addEventListener('click', handleCountClick);
-  document.getElementById('changeArticleButton').addEventListener('click', handleChangeArticleClick);
+  document.getElementById('saveCommentButton').addEventListener('click', handleSaveComment);
 </script>
 </body>
 </html>
