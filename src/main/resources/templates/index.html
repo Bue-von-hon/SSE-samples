@@ -3,12 +3,94 @@
 <head>
   <title>모두의 SSE</title>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    /* 전체 레이아웃 */
+    #app {
+      width: 80%;
+      margin: auto;
+      font-family: Arial, sans-serif;
+    }
+
+    /* 게시글 정보 */
+    #postInfo {
+      background-color: #f1f1f1;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    #postTitle {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    #postAuthor, #postDate {
+      margin: 5px 0;
+      font-size: 0.9em;
+    }
+
+    /* 게시글 내용 */
+    #postContent {
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    /* 댓글 부분 */
+    #comments {
+      padding: 20px;
+      background-color: #fafafa;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    #commentInput {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    /* 버튼 */
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
 <div id="app">
+  <!-- 게시글 정보 -->
+  <div id="postInfo">
+    <h1 id="postTitle">모두의 Server-Sent Events</h1>
+    <p id="postAuthor">작성자: 김태훈</p>
+    <p id="postDate">작성 일자: 2023-08-26</p>
+  </div>
+
+  <!-- 게시글 내용 -->
+  <div id="postContent">
+    <p>테크살롱에서 휴가 보내려구여..ㅋㅋㅋ - 8월 21일 오후 11시 55분 2호선</p>
+    <p>문 열어주세요~ - 8월 22일 오후 3시 41분</p>
+    <p>집에 언제가죠..? - 8월 23일 오후 10시 14분 테크살롱</p>
+    <P>주니어 개발자 흑역사 만들어주는 제이슨</P>
+  </div>
+
+  <!-- 댓글 -->
+  <div id="comments"></div>
   <button id="connectButton">connect 요청</button>
   <button id="saveCommentButton">댓글 저장</button>
-  <div id="comments"></div>
   <input id="commentInput" type="text" placeholder="댓글을 입력하세요">
 </div>
 
