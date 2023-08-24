@@ -32,13 +32,13 @@ public class CommentService {
 
     public void saveAndSend(Comment comment, String articleId) {
         Set<SseEmitter> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
+        final SseEmitter.SseEventBuilder eventBuilder =
+                SseEmitter.event()
+                        .name("newComment")
+                        .data(comment)
+                        .reconnectTime(30000L);
         connections.stream()
                 .forEach(connection -> {
-                    final SseEmitter.SseEventBuilder eventBuilder =
-                            SseEmitter.event()
-                                    .name("newComment")
-                                    .data(comment)
-                                    .reconnectTime(30000L);
                     send(eventBuilder, connection);
                 });
     }
