@@ -21,9 +21,9 @@
 
 ### Prerequisites
 
-- SpringBoot 3 이상
-- Java 17 이상
-- Gradle 8 이상
+- SpringBoot 2.7
+- Java 11
+- Gradle 8.3
 
 ### Installation
 
