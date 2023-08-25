@@ -20,18 +20,6 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> connect(
-            @RequestParam("articleId") final String articleId) {
-        final SseEmitter connection = commentService.startViewingArticle(articleId);
-        return ResponseEntity.ok(connection);
-    }
 
-    @PostMapping("/comment")
-    public ResponseEntity<Void> saveComment(
-            @RequestBody Comment comment,
-            @RequestParam("articleId") String articleId) {
-        commentService.saveAndSend(comment, articleId);
-        return ResponseEntity.ok().build();
-    }
+
 }
