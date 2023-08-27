@@ -1,55 +1,74 @@
 package com.example.youthcon.handson;
 
+import com.example.youthcon.preparation.Comment;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.example.youthcon.preparation.*;
-
-import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 @Service
 public class CommentService {
 
-    private final Map<String, Set<SseEmitter>> articleToConnection = new ConcurrentHashMap<>();
+    private final long sseTimeout;
+    private final long sseReconnectTime;
+    private final Map<String, Set<SseEmitter>> emitterMap = new ConcurrentHashMap<>();
+
+    public CommentService(@Value("${sse.timeout}") long sseTimeout, @Value("${sse.reconnect-time}") long sseReconnectTime) {
+        this.sseTimeout = sseTimeout;
+        this.sseReconnectTime = sseReconnectTime;
+    }
 
     public SseEmitter startViewingArticle(String articleId) {
-        SseEmitter sseEmitter = new SseEmitter(300000L);
-        final SseEmitter.SseEventBuilder eventBuilder = SseEmitter.event()
-                .name("connect")
-                .data("connected!")
-                .reconnectTime(3000L);
-        send(eventBuilder, sseEmitter);
-
-        final Set<SseEmitter> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
-        connections.add(sseEmitter);
-        articleToConnection.put(articleId, connections);
+        SseEmitter sseEmitter = createSseEmitter(articleId);
+        registerSseEmitter(articleId, sseEmitter);
+        send(sseEmitter, eventBuilder("connect", "connected!"));
         return sseEmitter;
     }
 
-    public void saveAndSend(Comment comment, String articleId) {
-        Set<SseEmitter> connections = articleToConnection.getOrDefault(articleId, new HashSet<>());
-        final SseEmitter.SseEventBuilder eventBuilder =
-                SseEmitter.event()
-                        .name("newComment")
-                        .data(comment)
-                        .reconnectTime(30000L);
-        connections.stream()
-                .forEach(connection -> {
-                    send(eventBuilder, connection);
-                });
+    private SseEmitter createSseEmitter(String articleId) {
+        SseEmitter sseEmitter = new SseEmitter(sseTimeout);
+        Runnable unregisterEmitter = () -> {
+            Set<SseEmitter> sseEmitters = emitterMap.get(articleId);
+            sseEmitters.remove(sseEmitter);
+        };
+        sseEmitter.onCompletion(unregisterEmitter);
+        sseEmitter.onTimeout(unregisterEmitter);
+        sseEmitter.onError(e -> unregisterEmitter.run());
+        return sseEmitter;
     }
 
-    void send(final SseEmitter.SseEventBuilder builder, SseEmitter emitter) {
+    private void registerSseEmitter(String articleId, SseEmitter sseEmitter) {
+        emitterMap.putIfAbsent(articleId, new CopyOnWriteArraySet<>());
+        Set<SseEmitter> emitters = emitterMap.get(articleId);
+        emitters.add(sseEmitter);
+    }
+
+    private SseEmitter.SseEventBuilder eventBuilder(String eventName, Object data) {
+        return SseEmitter.event()
+                .name(eventName)
+                .data(data)
+                .reconnectTime(sseReconnectTime);
+    }
+
+    private void send(SseEmitter emitter, SseEmitter.SseEventBuilder eventBuilder) {
         try {
-            emitter.send(builder);
+            emitter.send(eventBuilder);
         } catch (IOException e) {
-            // 유저가 탭을 닫고, 충분한 시간이 지나기 전에 댓글을 전송해야한다면, broken pipe 에러가 날 수 있다
-            // 그래서 complete 해주어야 한다.
             emitter.complete();
+        }
+    }
+
+    public void saveComment(String articleId, Comment comment) {
+        if (emitterMap.containsKey(articleId)) {
+            Set<SseEmitter> emitters = emitterMap.get(articleId);
+            SseEmitter.SseEventBuilder eventBuilder = eventBuilder("newComment", comment);
+            emitters.forEach(connection -> send(connection, eventBuilder));
         }
     }
 }

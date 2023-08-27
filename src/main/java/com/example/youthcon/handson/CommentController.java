@@ -2,6 +2,7 @@ package com.example.youthcon.handson;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,16 +23,16 @@ public class CommentController {
 
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> connect(
-            @RequestParam("articleId") final String articleId) {
-        final SseEmitter connection = commentService.startViewingArticle(articleId);
-        return ResponseEntity.ok(connection);
+            @RequestParam final String articleId) {
+        SseEmitter emitter = commentService.startViewingArticle(articleId);
+        return ResponseEntity.ok(emitter);
     }
 
     @PostMapping("/comment")
     public ResponseEntity<Void> saveComment(
             @RequestBody Comment comment,
-            @RequestParam("articleId") String articleId) {
-        commentService.saveAndSend(comment, articleId);
+            @RequestParam String articleId) {
+        commentService.saveComment(articleId, comment);
         return ResponseEntity.ok().build();
     }
 }
